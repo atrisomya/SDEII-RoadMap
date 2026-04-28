@@ -1,52 +1,119 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Brain, FileText, Briefcase, ChevronDown, ChevronUp, Check, Copy, CheckCircle2, Circle, Plus, Trash2, User, Target, TrendingUp, BarChart2, Menu, X } from 'lucide-react';
+import { Calendar, Brain, FileText, Briefcase, ChevronDown, ChevronUp, Check, Copy, CheckCircle2, Circle, Plus, Trash2, User, Target, TrendingUp, BarChart2, Menu, X, LogOut, Loader2 } from 'lucide-react';
 import { weeks, strategies, resumeSections, jobSearchSections } from './data';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import Auth from './components/Auth';
 
 const DEFAULT_TRACKER_ROWS = Array.from({ length: 5 }, () => ({
   id: crypto.randomUUID(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: ''
 }));
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roadmap');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // LocalStorage states
-  const [completedDays, setCompletedDays] = useState(() => JSON.parse(localStorage.getItem('sde2-completed-days')) || {});
-  const [completedJobTasks, setCompletedJobTasks] = useState(() => JSON.parse(localStorage.getItem('sde2-job-tasks')) || {});
-  const [trackerRows, setTrackerRows] = useState(() => JSON.parse(localStorage.getItem('sde2-tracker-rows')) || DEFAULT_TRACKER_ROWS);
+  // Data states
+  const [completedDays, setCompletedDays] = useState({});
+  const [completedJobTasks, setCompletedJobTasks] = useState({});
+  const [trackerRows, setTrackerRows] = useState(DEFAULT_TRACKER_ROWS);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // UI states
   const [expandedWeeks, setExpandedWeeks] = useState({});
   const [expandedJobSections, setExpandedJobSections] = useState({});
   const [copiedSection, setCopiedSection] = useState(null);
 
-  // Sync to LocalStorage
-  useEffect(() => localStorage.setItem('sde2-completed-days', JSON.stringify(completedDays)), [completedDays]);
-  useEffect(() => localStorage.setItem('sde2-job-tasks', JSON.stringify(completedJobTasks)), [completedJobTasks]);
-  useEffect(() => localStorage.setItem('sde2-tracker-rows', JSON.stringify(trackerRows)), [trackerRows]);
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Firestore Sync & Migration
+  useEffect(() => {
+    if (!user) {
+      setIsDataLoaded(false);
+      return;
+    }
+
+    const userDocRef = doc(db, 'users', user.uid);
+
+    // Initial fetch and real-time listener
+    const unsubscribe = onSnapshot(userDocRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setCompletedDays(data.completedDays || {});
+        setCompletedJobTasks(data.completedJobTasks || {});
+        setTrackerRows(data.trackerRows || DEFAULT_TRACKER_ROWS);
+        setIsDataLoaded(true);
+      } else {
+        // No data in Firestore yet - Check for LocalStorage migration
+        const localDays = JSON.parse(localStorage.getItem('sde2-completed-days')) || {};
+        const localTasks = JSON.parse(localStorage.getItem('sde2-job-tasks')) || {};
+        const localRows = JSON.parse(localStorage.getItem('sde2-tracker-rows')) || DEFAULT_TRACKER_ROWS;
+
+        // Migrate to Firestore
+        await setDoc(userDocRef, {
+          completedDays: localDays,
+          completedJobTasks: localTasks,
+          trackerRows: localRows,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Local state will be updated by the next snapshot or manually here
+        setCompletedDays(localDays);
+        setCompletedJobTasks(localTasks);
+        setTrackerRows(localRows);
+        setIsDataLoaded(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Save to Firestore helper
+  const saveToFirestore = async (newData) => {
+    if (!user) return;
+    const userDocRef = doc(db, 'users', user.uid);
+    try {
+      await setDoc(userDocRef, { 
+        ...newData, 
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error saving to Firestore:", err);
+    }
+  };
 
   // Handlers for Roadmap
   const toggleDay = (weekId, dayId) => {
-    setCompletedDays(prev => {
-      const key = `${weekId}-${dayId}`;
-      const next = { ...prev };
-      if (next[key]) delete next[key];
-      else next[key] = true;
-      return next;
-    });
+    const key = `${weekId}-${dayId}`;
+    const next = { ...completedDays };
+    if (next[key]) delete next[key];
+    else next[key] = true;
+    
+    setCompletedDays(next);
+    saveToFirestore({ completedDays: next });
   };
 
   const completeAllDaysInWeek = (weekId) => {
     const week = weeks.find(w => w.id === weekId);
     if (!week) return;
     
-    setCompletedDays(prev => {
-      const next = { ...prev };
-      week.days.forEach(d => {
-        next[`${weekId}-${d.id}`] = true;
-      });
-      return next;
+    const next = { ...completedDays };
+    week.days.forEach(d => {
+      next[`${weekId}-${d.id}`] = true;
     });
+    
+    setCompletedDays(next);
+    saveToFirestore({ completedDays: next });
   };
 
   const toggleWeek = (weekId) => setExpandedWeeks(prev => ({ ...prev, [weekId]: !prev[weekId] }));
@@ -62,26 +129,34 @@ export default function App() {
 
   // Handlers for Job Search
   const toggleJobTask = (taskId) => {
-    setCompletedJobTasks(prev => {
-      const next = { ...prev };
-      if (next[taskId]) delete next[taskId];
-      else next[taskId] = true;
-      return next;
-    });
+    const next = { ...completedJobTasks };
+    if (next[taskId]) delete next[taskId];
+    else next[taskId] = true;
+    
+    setCompletedJobTasks(next);
+    saveToFirestore({ completedJobTasks: next });
   };
 
   const toggleJobSection = (sectionId) => setExpandedJobSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
 
   // Handlers for Tracker
   const addTrackerRow = () => {
-    setTrackerRows(prev => [...prev, { id: crypto.randomUUID(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' }]);
+    const next = [...trackerRows, { id: crypto.randomUUID(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' }];
+    setTrackerRows(next);
+    saveToFirestore({ trackerRows: next });
   };
   const updateTrackerRow = (id, field, value) => {
-    setTrackerRows(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+    const next = trackerRows.map(row => row.id === id ? { ...row, [field]: value } : row);
+    setTrackerRows(next);
+    saveToFirestore({ trackerRows: next });
   };
   const deleteTrackerRow = (id) => {
-    setTrackerRows(prev => prev.filter(row => row.id !== id));
+    const next = trackerRows.filter(row => row.id !== id);
+    setTrackerRows(next);
+    saveToFirestore({ trackerRows: next });
   };
+
+  const handleLogout = () => signOut(auth);
 
   const getBadgeColor = (color) => {
     switch (color) {
@@ -127,6 +202,19 @@ export default function App() {
     { id: 'jobsearch', icon: Briefcase, label: 'Job Search Strategy' }
   ];
 
+  if (authLoading || (user && !isDataLoaded)) {
+    return (
+      <div className="h-screen bg-slate-950 flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+        <p className="text-slate-400 font-medium animate-pulse">Initializing your roadmap...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
+
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden selection:bg-indigo-500/30">
       
@@ -136,9 +224,14 @@ export default function App() {
           <Target className="w-5 h-5 text-indigo-400" />
           Prep Tracker
         </h1>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-400 hover:text-slate-100">
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
+            <LogOut className="w-5 h-5" />
+          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-400 hover:text-slate-100">
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Dashboard */}
@@ -154,11 +247,18 @@ export default function App() {
             <div className="w-12 h-12 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center">
               <User className="w-6 h-6 text-indigo-400" />
             </div>
-            <div>
-              <h2 className="font-bold text-slate-100">Java SDE-2</h2>
-              <p className="text-xs font-medium text-slate-400">Target: 15LPA+</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-slate-100 truncate">{user.displayName || 'Java SDE-2'}</h2>
+              <p className="text-xs font-medium text-slate-400 truncate">{user.email}</p>
             </div>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-900/50 transition-all text-xs font-bold"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
 
         {/* Navigation Tabs */}
@@ -478,7 +578,8 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                       <tr className="bg-slate-800/50 border-b border-slate-700">
@@ -578,6 +679,102 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-slate-800">
+                  {trackerRows.map((row) => (
+                    <div key={row.id} className="p-4 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-1">
+                          <input 
+                            type="text" 
+                            className="w-full bg-transparent border-0 text-base font-bold text-slate-100 focus:ring-1 focus:ring-indigo-500 rounded p-0 placeholder-slate-600" 
+                            placeholder="Company Name" 
+                            value={row.company} 
+                            onChange={(e) => updateTrackerRow(row.id, 'company', e.target.value)} 
+                          />
+                          <input 
+                            type="text" 
+                            className="w-full bg-transparent border-0 text-sm text-slate-400 focus:ring-1 focus:ring-indigo-500 rounded p-0 placeholder-slate-600" 
+                            placeholder="Role (e.g. SDE-2)" 
+                            value={row.role} 
+                            onChange={(e) => updateTrackerRow(row.id, 'role', e.target.value)} 
+                          />
+                        </div>
+                        <button 
+                          onClick={() => deleteTrackerRow(row.id)}
+                          className="text-slate-500 hover:text-red-400 p-2"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Status</label>
+                          <select 
+                            className={`w-full border-0 text-xs font-bold focus:ring-1 focus:ring-indigo-500 rounded p-2 cursor-pointer appearance-none ${getStatusColor(row.status)}`}
+                            value={row.status}
+                            onChange={(e) => updateTrackerRow(row.id, 'status', e.target.value)}
+                          >
+                            <option value="Applied">Applied</option>
+                            <option value="Recruiter Call">Recruiter Call</option>
+                            <option value="Technical Round">Technical Round</option>
+                            <option value="Final Round">Final Round</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Ghosted">Ghosted</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Referral</label>
+                          <select 
+                            className="w-full bg-slate-800 border-slate-700 border text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500 rounded p-2 cursor-pointer"
+                            value={row.referral}
+                            onChange={(e) => updateTrackerRow(row.id, 'referral', e.target.value)}
+                          >
+                            <option>No</option>
+                            <option>Yes</option>
+                            <option>Pending</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Applied Via</label>
+                          <input 
+                            type="text" 
+                            className="w-full bg-slate-800 border-slate-700 border text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500 rounded p-2 placeholder-slate-600" 
+                            placeholder="LinkedIn/Portal" 
+                            value={row.appliedVia} 
+                            onChange={(e) => updateTrackerRow(row.id, 'appliedVia', e.target.value)} 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Date</label>
+                          <input 
+                            type="date" 
+                            className="w-full bg-slate-800 border-slate-700 border text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500 rounded p-2" 
+                            value={row.date} 
+                            onChange={(e) => updateTrackerRow(row.id, 'date', e.target.value)} 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Notes</label>
+                        <textarea 
+                          className="w-full bg-slate-800 border-slate-700 border text-xs text-slate-200 focus:ring-1 focus:ring-indigo-500 rounded p-2 placeholder-slate-600 h-16 resize-none" 
+                          placeholder="Interview feedback, next steps..." 
+                          value={row.notes} 
+                          onChange={(e) => updateTrackerRow(row.id, 'notes', e.target.value)} 
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
                   <div className="p-3 border-t border-slate-800">
                     <button 
                       onClick={addTrackerRow}
@@ -588,8 +785,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
         </div>
       </main>
