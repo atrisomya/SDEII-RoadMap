@@ -354,3 +354,11 @@ export const jobSearchSections = [
     ]
   }
 ];
+
+export const DEFAULT_TRACKER_ROWS = [
+  { id: '1', company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' },
+  { id: '2', company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' },
+  { id: '3', company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' },
+  { id: '4', company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' },
+  { id: '5', company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' }
+];

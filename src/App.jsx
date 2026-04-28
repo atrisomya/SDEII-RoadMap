@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Brain, FileText, Briefcase, ChevronDown, ChevronUp, Check, Copy, CheckCircle2, Circle, Plus, Trash2, User, Target, TrendingUp, BarChart2, Menu, X, LogOut, Loader2 } from 'lucide-react';
-import { weeks, strategies, resumeSections, jobSearchSections } from './data';
+import { weeks, strategies, resumeSections, jobSearchSections, DEFAULT_TRACKER_ROWS } from './data';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import Auth from './components/Auth';
 
-const DEFAULT_TRACKER_ROWS = Array.from({ length: 5 }, () => ({
-  id: crypto.randomUUID(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: ''
-}));
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -141,7 +139,7 @@ export default function App() {
 
   // Handlers for Tracker
   const addTrackerRow = () => {
-    const next = [...trackerRows, { id: crypto.randomUUID(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' }];
+    const next = [...trackerRows, { id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(), company: '', role: '', appliedVia: '', date: '', referral: 'No', status: 'Applied', notes: '' }];
     setTrackerRows(next);
     saveToFirestore({ trackerRows: next });
   };
