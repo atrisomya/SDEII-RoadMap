@@ -1,16 +1,62 @@
-# React + Vite
+# 🚀 SDE-II Interview Prep Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A premium, ADHD-friendly 16-week interview preparation roadmap designed specifically for Java/Spring Boot engineers targeting Senior Software Engineer (SDE-II) roles.
 
-Currently, two official plugins are available:
+![Preview](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1200)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **16-Week Structured Curriculum**: Focused on DSA, System Design, Java Concurrency, and Behavioral prep.
+- **ADHD-Friendly Design**: 25-minute study blocks, visual progress tracking, and "Dopamine Scheduling" tips.
+- **Firebase Integration**: Real-time sync across devices and secure authentication.
+- **Interactive Job Tracker**: Manage applications, referrals, and interview statuses in one place.
+- **Resume Templates**: Pre-built sections tailored for 3+ year Java developers.
+- **Fully Responsive**: Optimized for both high-performance desktop tracking and on-the-go mobile review.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend**: React 19 + Vite
+- **Styling**: Tailwind CSS 4
+- **Backend/Database**: Firebase Auth & Cloud Firestore
+- **Icons**: Lucide React
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/SDEII-RoadMap.git
+cd SDEII-RoadMap
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Environment Setup
+Create a `.env` file in the root directory and add your Firebase configuration:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
+
+### 4. Run Locally
+```bash
+npm run dev
+```
+
+## 🌐 Deployment
+
+### Vercel (Recommended)
+1. Push your code to GitHub.
+2. Import the project in [Vercel](https://vercel.com).
+3. Add the environment variables from your `.env` file in the Vercel project settings.
+4. Deploy!
+
+## 📄 License
+MIT License - feel free to use and adapt for your own prep!
