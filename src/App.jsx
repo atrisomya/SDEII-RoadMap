@@ -115,6 +115,19 @@ export default function App() {
     saveToFirestore({ completedDays: next });
   };
 
+  const resetWeekProgress = (weekId) => {
+    const week = weeks.find(w => w.id === weekId);
+    if (!week) return;
+
+    const next = { ...completedDays };
+    week.days.forEach(d => {
+      delete next[`${weekId}-${d.id}`];
+    });
+
+    setCompletedDays(next);
+    saveToFirestore({ completedDays: next });
+  };
+
   const toggleWeek = (weekId) => setExpandedWeeks(prev => ({ ...prev, [weekId]: !prev[weekId] }));
 
   const isWeekComplete = (weekId) => {
@@ -624,18 +637,25 @@ export default function App() {
                           })}
                         </div>
 
-                        {/* Mark Week Complete Button */}
-                        {!isComplete && (
-                          <div className="mt-6 flex justify-end">
+                        <div className="mt-6 flex justify-end">
+                          {isComplete ? (
+                            <button
+                              onClick={() => resetWeekProgress(week.id)}
+                              className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white rounded-full text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg uppercase tracking-widest"
+                            >
+                              <X className="w-4 h-4" />
+                              Reset Progress
+                            </button>
+                          ) : (
                             <button
                               onClick={() => completeAllDaysInWeek(week.id)}
-                              className="flex items-center gap-2 px-6 py-3 bg-[#FF1493] hover:bg-[#C2185B] text-white rounded-full text-sm font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#FF1493]/30"
+                              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FF1493] to-[#C2185B] text-white rounded-full text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#FF1493]/30 uppercase tracking-widest border-b-4 border-[#4A0404]"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                               Mark week complete
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
