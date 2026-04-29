@@ -232,8 +232,15 @@ export default function App() {
           Prep Tracker 🎀
         </h1>
         <div className="flex items-center gap-2">
-          <button onClick={handleLogout} className="p-2 text-white/80 hover:text-white transition-colors">
+          <button 
+            onClick={handleLogout} 
+            className="p-2 text-white/80 hover:text-white transition-all relative group/tooltip"
+          >
             <LogOut className="w-5 h-5" />
+            {/* Royal Tooltip */}
+            <span className="absolute top-full right-0 mt-2 px-2 py-1 bg-[#4A0404] text-[#D4AF37] text-[10px] font-black uppercase tracking-widest rounded border border-[#D4AF37]/30 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[60] shadow-xl">
+              Exit Throne Room 👑
+            </span>
           </button>
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-white hover:text-white">
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -246,10 +253,10 @@ export default function App() {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
         fixed lg:static top-0 left-0 w-72 h-full glass-sidebar z-40
-        flex flex-col overflow-y-auto
+        flex flex-col overflow-y-auto overflow-x-hidden pt-16 lg:pt-0
       `}>
         {/* Profile Snippet */}
-        <div className="p-6 border-b border-white/10 mt-14 lg:mt-0 relative overflow-hidden group">
+        <div className="p-5 border-b border-white/10 relative group">
           <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           <div className="flex items-center gap-4 mb-4 relative">
             <div className="w-14 h-14 rounded-full premium-gradient p-1 shadow-lg shadow-[#FF1493]/30">
@@ -258,19 +265,24 @@ export default function App() {
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-heading text-base text-white glow-text flex items-center gap-2">
-                👑 {user.displayName || 'Royal Candidate'}
-              </h2>
-              <p className="text-[10px] font-medium text-white/50 truncate">{user.email}</p>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-heading text-sm text-white glow-text truncate">
+                  👑 {user.displayName || 'Royal'}
+                </h2>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg bg-white/10 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition-all shadow-lg relative group/tooltip"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {/* Royal Tooltip */}
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#4A0404] text-[#D4AF37] text-[8px] font-black uppercase tracking-widest rounded border border-[#D4AF37]/30 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                    Exit Kingdom 🏰
+                  </span>
+                </button>
+              </div>
+              <p className="text-[10px] font-medium text-white/40 truncate mt-1">{user.email}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition-all text-xs font-black uppercase tracking-widest"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign Out
-          </button>
         </div>
 
         {/* Navigation Tabs */}
