@@ -1,7 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Poppins', sans-serif;
+  --font-cursive: 'Pacifico', cursive;
+  
+  --color-barbie-primary: #FF1493;
+  --color-barbie-secondary: #702963;
+  --color-barbie-royal: #4A0404;
+  --color-barbie-gold: #D4AF37;
+  --color-barbie-hot-pink: #FF1493;
+  --color-barbie-magenta: #C2185B;
+  --color-barbie-blush: #FCE4EC;
+  --color-barbie-neon: #FF007F;
+  --color-barbie-deep-pink: #880E4F;
+  --color-barbie-light-pink: #FFCDD2;
+  --color-barbie-soft-blush: #FFF0F5;
+  --color-gold: #D4AF37;
+}
+
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-200 font-sans antialiased;
+  :root {
+    --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   }
+
+  body {
+    @apply bg-[#FFF0F5] text-[#880E4F] font-sans antialiased;
+    background-image: 
+      /* Pink grid overlay - 10% opacity */
+      linear-gradient(rgba(255, 20, 147, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 20, 147, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  /* Sparkle effect */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    background-image: 
+      radial-gradient(circle, #fff 1px, transparent 1px),
+      radial-gradient(circle, #fff 1px, transparent 1px);
+    background-size: 100px 100px, 150px 150px;
+    background-position: 0 0, 50px 50px;
+    opacity: 0.3;
+    z-index: -1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 
+      0 15px 35px -5px rgba(0, 0, 0, 0.1),
+      0 10px 15px -10px rgba(212, 175, 55, 0.1);
+  }
+
+  .royal-card {
+    background: linear-gradient(to bottom right, #ffffff, #fff5f8);
+    border: 2px solid #D4AF37;
+    position: relative;
+  }
+
+  .royal-card::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid #D4AF37;
+    border-radius: inherit;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  
+  .glass-sidebar {
+    background: linear-gradient(to bottom, #702963, #4A0404);
+    border-r: 2px solid #D4AF37;
+    box-shadow: 10px 0 50px rgba(0, 0, 0, 0.3);
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+  }
+
+  .premium-gradient {
+    background: linear-gradient(135deg, #FF1493 0%, #D4AF37 50%, #FF69B4 100%);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 15px rgba(194, 24, 91, 0.4);
+  }
+
+  .font-heading {
+    font-family: 'Pacifico', cursive;
+  }
+
+  /* ── Barbie Fuel Gauge ─────────────────────────────── */
+  .fuel-track {
+    @apply relative w-full bg-[#FFCDD2] rounded-full overflow-visible;
+    height: 8px;
+  }
+
+  .fuel-fill {
+    position: relative;
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #FF69B4 0%, #FF1493 100%);
+    transition: width 1000ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(255, 20, 147, 0.4);
+  }
+
+  .fuel-fill::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8), 0 0 20px 4px rgba(255, 20, 147, 0.6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .fuel-fill.has-progress::after {
+    opacity: 1;
+  }
+
+  /* ── Barbie Checkbox ──────────────────────────────────────── */
+  .custom-checkbox {
+    @apply relative w-6 h-6 rounded-lg border-2 border-[#FF69B4] bg-white 
+           flex items-center justify-center cursor-pointer
+           transition-all duration-200;
+    flex-shrink: 0;
+  }
+
+  .custom-checkbox:hover,
+  .checkbox-row:hover .custom-checkbox {
+    border-color: #FF1493;
+    box-shadow: 0 0 12px rgba(255, 20, 147, 0.3);
+    transform: scale(1.05);
+  }
+
+  .custom-checkbox.is-checked {
+    background: #FF1493;
+    border-color: #FF1493;
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.5);
+    animation: checkbox-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .custom-checkbox.is-checked-blue {
+    background: #FF007F;
+    border-color: #FF007F;
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+    animation: checkbox-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+/* Custom Scrollbar - Pink Edition */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-[#FFF0F5];
+}
+::-webkit-scrollbar-thumb {
+  background: #FF69B4;
+  border-radius: 9999px;
+  border: 2px solid #FFF0F5;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF1493;
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes checkbox-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+.animate-float-fast { animation: float-fast 10s ease-in-out infinite; }
+.animate-sparkle { animation: sparkle 4s ease-in-out infinite; }
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
 }
